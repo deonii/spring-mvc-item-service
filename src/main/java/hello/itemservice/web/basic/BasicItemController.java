@@ -4,21 +4,28 @@ package hello.itemservice.web.basic;
 import hello.itemservice.domain.item.Item;
 import hello.itemservice.domain.item.ItemRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
 
+@Slf4j
 @Controller
 @RequestMapping("/basic/items")
 @RequiredArgsConstructor
 public class BasicItemController {
 
     private final ItemRepository itemRepository;
+    private final ItemValidator itemValidator;
 
     @GetMapping
     public String items(Model model) {
@@ -80,8 +87,59 @@ public class BasicItemController {
 //        return "redirect:/basic/items/" + item.getId();
 //    }
 
+//    @PostMapping("/add")
+//    public String addItemV6(Item item, RedirectAttributes redirectAttributes) {
+//        Item savedItem = itemRepository.save(item);
+//        redirectAttributes.addAttribute("itemId", savedItem.getId());
+//        redirectAttributes.addAttribute("status", true);
+//
+//        return "redirect:/basic/items/{itemId}";
+//    }
+
+//    @PostMapping("/add")
+//    public String addItemErrorV1(@ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes) {
+//
+//        if(!StringUtils.hasText(item.getItemName())){
+//            bindingResult.addError(new FieldError("item", "itemName", "상품명은 필수입니다."));
+//        }
+//
+//        if(item.getPrice() == null || item.getPrice() < 1000 || item.getPrice() > 1000000) {
+//            bindingResult.addError(new FieldError("item", "itemPrice", "가격 범위에서 벗어납니다."));
+//        }
+//
+//        if(item.getQuantity() == null || item.getQuantity() >= 9999) {
+//            bindingResult.addError(new FieldError("item", "itemQuantity", "수량 범위에서 벗어납니다."));
+//        }
+//
+//        if(item.getPrice() != null && item.getQuantity() != null) {
+//            int resultPrice = item.getPrice() * item.getQuantity();
+//            if(resultPrice < 10000) {
+//                bindingResult.addError(new ObjectError("item", "가격 수량 통합이 10000이상이여야 합니다."));
+//            }
+//        }
+//
+//        if(bindingResult.hasErrors()) {
+//            log.info("errors = {}", bindingResult);
+//            return "basic/addForm";
+//        }
+//
+//        Item savedItem = itemRepository.save(item);
+//        redirectAttributes.addAttribute("itemId", savedItem.getId());
+//        redirectAttributes.addAttribute("status", true);
+//
+//        return "redirect:/basic/items/{itemId}";
+//    }
+
     @PostMapping("/add")
-    public String addItemV6(Item item, RedirectAttributes redirectAttributes) {
+    public String addItemErrorV2(@ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes) {
+
+        itemValidator.validate(item, bindingResult);
+
+        if(bindingResult.hasErrors()) {
+            log.info("errors = {}", bindingResult);
+            return "basic/addForm";
+        }
+
         Item savedItem = itemRepository.save(item);
         redirectAttributes.addAttribute("itemId", savedItem.getId());
         redirectAttributes.addAttribute("status", true);
